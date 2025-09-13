@@ -5,7 +5,6 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:movie_splash/app_name.dart';
 import 'package:movie_splash/download_apk_helper.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
@@ -28,7 +27,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   late Animation<double> _categoryAnimation;
 
   final CarouselSliderController _carouselController =
-  CarouselSliderController();
+      CarouselSliderController();
   int _currentCarouselIndex = 0;
   bool _isLoading = true;
   String _selectedCategory = 'latest'; // Changed to match Firebase structure
@@ -38,6 +37,8 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
 
   List<MoviePoster> get _currentMovies =>
       _moviesByCategory[_selectedCategory] ?? [];
+
+  int _movieCount = 0;
 
   @override
   void initState() {
@@ -66,9 +67,10 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         print("Categories loaded: $categories");
 
         // Use Future.wait to properly handle async operations
-        await Future.wait(
-            categories.map((category) => _loadMoviesForCategory(category))
-        );
+        await Future.wait([
+          getCount(),
+          ...categories.map((category) => _loadMoviesForCategory(category)),
+        ]);
 
         // Set the first category as selected if available
         if (categories.isNotEmpty) {
@@ -82,6 +84,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         _isCategoryLoading = false;
       });
     }
+  }
+
+  Future<void> getCount() async {
+    final res = await FirebaseFirestore.instance
+        .collection('web')
+        .doc("movie_count")
+        .get();
+    _movieCount = res.data()!['count'];
   }
 
   Future<void> _loadMoviesForCategory(String category) async {
@@ -127,7 +137,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             }).toList();
 
             _moviesByCategory[category] = movies;
-            print("Loaded ${movies.length} movies from document 'web/$category'");
+            print(
+              "Loaded ${movies.length} movies from document 'web/$category'",
+            );
           }
         }
       }
@@ -340,11 +352,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFixedHeader(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
@@ -409,7 +421,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '100,000+',
+                          '$_movieCount+',
                           style: TextStyle(
                             fontSize: isSmallMobile
                                 ? 12
@@ -444,11 +456,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildHeroSection(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       height: isDesktop
           ? 300
@@ -522,11 +534,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildMovieCarousel(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       height: isDesktop
           ? 600
@@ -580,8 +592,10 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final double aspectRatio = 2 / 3;
-                        final double itemWidth = constraints.maxHeight * aspectRatio;
-                        final double viewportFraction = itemWidth / constraints.maxWidth;
+                        final double itemWidth =
+                            constraints.maxHeight * aspectRatio;
+                        final double viewportFraction =
+                            itemWidth / constraints.maxWidth;
 
                         if (_currentMovies.isEmpty) {
                           return Center(
@@ -664,11 +678,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildGenreChips(
-      bool isSmallMobile,
-      bool isMobile,
-      bool isTablet,
-      bool isDesktop,
-      ) {
+    bool isSmallMobile,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
     if (_isCategoryLoading) {
       return CircularProgressIndicator();
     }
@@ -696,13 +710,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
               ),
               boxShadow: isActive
                   ? [
-                BoxShadow(
-                  color: const Color(0xFF2979FF).withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                ),
-              ]
+                      BoxShadow(
+                        color: const Color(0xFF2979FF).withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
                   : null,
             ),
             child: Text(
@@ -726,12 +740,12 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildMoviePosterCard(
-      MoviePoster movie,
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    MoviePoster movie,
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 1000),
@@ -782,9 +796,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                                 color: const Color(0xFF2979FF),
                                 strokeWidth: isSmallMobile ? 2 : 3,
                                 value:
-                                loadingProgress.expectedTotalBytes != null
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             ),
@@ -923,11 +937,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFAQSection(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
@@ -983,13 +997,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFAQItem(
-      String question,
-      String answer,
-      bool isSmallMobile,
-      bool isMobile,
-      bool isTablet,
-      bool isDesktop,
-      ) {
+    String question,
+    String answer,
+    bool isSmallMobile,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 800),
@@ -1046,11 +1060,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildSocialSection(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
@@ -1113,14 +1127,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildSocialButton(
-      String title,
-      String img,
-      bool isSmallMobile,
-      bool isMobile,
-      bool isTablet,
-      bool isDesktop,
-      bool isInsta,
-      ) {
+    String title,
+    String img,
+    bool isSmallMobile,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+    bool isInsta,
+  ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 600),
@@ -1151,18 +1165,18 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   Image.asset(
                     img,
                     height:
-                    (isSmallMobile
-                        ? 16
-                        : isDesktop
-                        ? 24
-                        : 20) *
+                        (isSmallMobile
+                            ? 16
+                            : isDesktop
+                            ? 24
+                            : 20) *
                         2,
                     width:
-                    (isSmallMobile
-                        ? 16
-                        : isDesktop
-                        ? 24
-                        : 20) *
+                        (isSmallMobile
+                            ? 16
+                            : isDesktop
+                            ? 24
+                            : 20) *
                         2,
                   ),
                   SizedBox(width: isSmallMobile ? 6 : 10),
@@ -1196,11 +1210,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFixedBottomSection(
-      bool isDesktop,
-      bool isTablet,
-      bool isMobile,
-      bool isSmallMobile,
-      ) {
+    bool isDesktop,
+    bool isTablet,
+    bool isMobile,
+    bool isSmallMobile,
+  ) {
     return Container(
       padding: EdgeInsets.all(
         isSmallMobile
@@ -1496,22 +1510,22 @@ class _HoverButtonState extends State<_HoverButton>
                 decoration: BoxDecoration(
                   boxShadow: _isHovered && widget.hoverShadowColor != null
                       ? [
-                    BoxShadow(
-                      color: widget.hoverShadowColor!.withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 4,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
+                          BoxShadow(
+                            color: widget.hoverShadowColor!.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 4,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
                       : _isHovered
                       ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: 3,
-                      offset: const Offset(0, 5),
-                    ),
-                  ]
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                            spreadRadius: 3,
+                            offset: const Offset(0, 5),
+                          ),
+                        ]
                       : null,
                 ),
                 child: widget.child,
