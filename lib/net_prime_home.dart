@@ -300,8 +300,10 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             _buildFixedHeader(isDesktop, isTablet, isMobile, isSmallMobile, isUltraSmallMobile),
             Expanded(
               child: SingleChildScrollView(
+                physics: ClampingScrollPhysics(),
                 child: Column(
                   children: [
+                    const SizedBox(height: 24),
                     _buildHeroSection(
                       isDesktop,
                       isTablet,
@@ -331,7 +333,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       isUltraSmallMobile,
                     ),
                     SizedBox(
-                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 90 : 20,
+                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 40 : 20,
                     ),
                   ],
                 ),
