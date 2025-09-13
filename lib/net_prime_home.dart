@@ -255,7 +255,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       ),
                     ],
                   ),
-                  child: Image.asset('logo.png', height: 60, width: 60),
+                  child: Image.asset('assets/logo.png', height: 60, width: 60),
                 ),
               );
             },
@@ -390,7 +390,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Image.asset(
-                            'logo.png',
+                            'assets/logo.png',
                             height: isSmallMobile ? 16 : 24,
                             width: isSmallMobile ? 16 : 24,
                           ),
@@ -1089,7 +1089,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             children: [
               _buildSocialButton(
                 'Instagram',
-                "instagram.png",
+                "assets/instagram.png",
                 isSmallMobile,
                 isMobile,
                 isTablet,
@@ -1098,7 +1098,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
               ),
               _buildSocialButton(
                 'Telegram',
-                "telegram.png",
+                "assets/telegram.png",
                 isSmallMobile,
                 isMobile,
                 isTablet,
@@ -1260,7 +1260,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Image.asset(
-                  'logo.png',
+                  'assets/logo.png',
                   height: isSmallMobile ? 16 : 22,
                   width: isSmallMobile ? 16 : 22,
                 ),

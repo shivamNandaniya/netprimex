@@ -65184,7 +65184,7 @@ q=A.Bx(A.bc(q,B.L.I()>>>16&255,B.L.I()>>>8&255,B.L.I()&255),1)
 i=a5?8:12
 h=A.fT(15)
 g=a5?16:22
-i=A.cj(a1,A.V8("logo.png",g,a5?16:22),B.p,a1,new A.c2(a1,a1,a1,h,a1,B.AC,B.K),a1,a1,a1,new A.b5(i,i,i,i),a1,a1,a1)
+i=A.cj(a1,A.V8("assets/logo.png",g,a5?16:22),B.p,a1,new A.c2(a1,a1,a1,h,a1,B.AC,B.K),a1,a1,a1,new A.b5(i,i,i,i),a1,a1,a1)
 h=A.dv(a1,a1,a5?12:18)
 if(a5)g=12
 else g=a2?16:14
@@ -65267,7 +65267,7 @@ p===$&&A.a()
 p=p.b.a7(p.a.gq())
 s=A.fT(20)
 r=A.c([new A.dk(5,B.aQ,A.bc(B.c.al(76.5),B.L.I()>>>16&255,B.L.I()>>>8&255,B.L.I()&255),B.k,20)],t.b)
-return A.Ho(B.ar,A.cj(q,A.V8("logo.png",60,60),B.p,q,new A.c2(q,q,q,s,r,B.kw,B.K),q,q,q,B.zn,q,q,q),p)},
+return A.Ho(B.ar,A.cj(q,A.V8("assets/logo.png",60,60),B.p,q,new A.c2(q,q,q,s,r,B.kw,B.K),q,q,q,B.zn,q,q,q),p)},
 $S:75}
 A.a8l.prototype={
 $2(a2,a3){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e=null,d=u.T,c=a3.b,b=c>800,a=c>600&&c<=800,a0=c<=600,a1=c<=360
@@ -65280,7 +65280,7 @@ p=A.c([new A.dk(0,B.aQ,A.bc(B.c.al(76.5),B.j.I()>>>16&255,B.j.I()>>>8&255,B.j.I(
 o=a1?6:8
 n=A.fT(12)
 m=a1?16:24
-o=A.cj(e,A.V8("logo.png",m,a1?16:24),B.p,e,new A.c2(e,e,e,n,e,B.kw,B.K),e,e,e,new A.b5(o,o,o,o),e,e,e)
+o=A.cj(e,A.V8("assets/logo.png",m,a1?16:24),B.p,e,new A.c2(e,e,e,n,e,B.kw,B.K),e,e,e,new A.b5(o,o,o,o),e,e,e)
 n=A.dv(e,e,a1?8:12)
 m=a1?18:24
 l=t.F
@@ -65328,7 +65328,7 @@ i=A.dN("Join the group to get the latest download link",e,e,A.c4(e,e,B.d6,e,e,e,
 h=A.dv(e,a1?20:30,e)
 g=a1?15:25
 f=a1?15:20
-m=A.cj(e,A.fh(A.c([k,j,i,h,A.ajT(B.vN,A.c([q.Di("Instagram","instagram.png",a1,a0,a,b,!0),q.Di("Telegram","telegram.png",a1,a0,a,b,!1)],l),f,g)],l),B.al,B.V,B.a5),B.p,e,e,e,e,e,new A.b5(n,m,n,m),e,e,e)
+m=A.cj(e,A.fh(A.c([k,j,i,h,A.ajT(B.vN,A.c([q.Di("Instagram","assets/instagram.png",a1,a0,a,b,!0),q.Di("Telegram","assets/telegram.png",a1,a0,a,b,!1)],l),f,g)],l),B.al,B.V,B.a5),B.p,e,e,e,e,e,new A.b5(n,m,n,m),e,e,e)
 if(a1)n=80
 else n=a0?90:20
 return A.fh(A.c([r,A.SY(new A.GN(A.fh(A.c([s,p,o,m,A.dv(e,n,e)],l),B.al,B.V,B.a5),e),1),q.St(b,a,a0,a1)],l),B.al,B.V,B.a5)},
