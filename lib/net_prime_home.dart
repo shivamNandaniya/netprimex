@@ -333,7 +333,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       isUltraSmallMobile,
                     ),
                     SizedBox(
-                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 40 : 20,
+                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 15 : 20,
                     ),
                   ],
                 ),

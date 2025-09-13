@@ -65472,7 +65472,7 @@ else g=a0?15:20
 n=A.cg(f,A.fi(A.c([m,k,j,i,A.ajV(B.vM,A.c([a1.Dj("Instagram","assets/instagram.png",c,b,a,a0,d,!0),a1.Dj("Telegram","assets/telegram.png",c,b,a,a0,d,!1)],l),g,h)],l),B.am,B.a_,B.a6),B.p,f,f,f,f,f,f,new A.b0(q,n,q,n),f,f,f)
 if(d)q=70
 else if(a0)q=80
-else q=a?40:20
+else q=a?15:20
 return A.fi(A.c([r,A.SZ(new A.GO(new A.t9(f),A.fi(A.c([B.HS,s,p,o,n,A.cS(f,q,f)],l),B.am,B.a_,B.a6),f),1),a1.St(c,b,a,a0,d)],l),B.am,B.a_,B.a6)},
 $S:431}
 A.a8k.prototype={
