@@ -20,19 +20,16 @@ class NetPrimeHome extends StatefulWidget {
 class _NetPrimeHomeState extends State<NetPrimeHome>
     with TickerProviderStateMixin {
   late AnimationController _logoController;
-  late AnimationController _backgroundController;
   late AnimationController _categoryController;
   late Animation<double> _logoAnimation;
-  late Animation<Color?> _backgroundAnimation;
   late Animation<double> _categoryAnimation;
 
   final CarouselSliderController _carouselController =
-      CarouselSliderController();
+  CarouselSliderController();
   int _currentCarouselIndex = 0;
   bool _isLoading = true;
-  String _selectedCategory = 'latest'; // Changed to match Firebase structure
+  String _selectedCategory = 'latest';
 
-  // Complete movie data with categories
   final Map<String, List<MoviePoster>> _moviesByCategory = {};
 
   List<MoviePoster> get _currentMovies =>
@@ -66,16 +63,17 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         categories = res.data()!['category'];
         print("Categories loaded: $categories");
 
-        // Use Future.wait to properly handle async operations
+        if (categories.isNotEmpty) {
+          _selectedCategory = categories.first;
+          _currentCarouselIndex = 0;
+        }
+
         await Future.wait([
           getCount(),
           ...categories.map((category) => _loadMoviesForCategory(category)),
         ]);
 
-        // Set the first category as selected if available
-        if (categories.isNotEmpty) {
-          _selectedCategory = categories.first;
-        }
+        setState(() {});
       }
     } catch (e) {
       print("Error loading categories: $e");
@@ -98,13 +96,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
     try {
       print("Loading movies for category: $category");
 
-      // Try fetching from collection first (like 'latest' collection)
       final collectionRes = await FirebaseFirestore.instance
           .collection(category)
           .get();
 
       if (collectionRes.docs.isNotEmpty) {
-        // If collection exists and has documents
         final movies = collectionRes.docs.map((doc) {
           final data = doc.data();
           return MoviePoster(
@@ -118,7 +114,6 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         _moviesByCategory[category] = movies;
         print("Loaded ${movies.length} movies from collection '$category'");
       } else {
-        // Fallback: Try fetching from web/{category} document
         final docRes = await FirebaseFirestore.instance
             .collection('web')
             .doc(category)
@@ -145,18 +140,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
       }
     } catch (e) {
       print("Error loading movies for category '$category': $e");
-      _moviesByCategory[category] = []; // Set empty list on error
+      _moviesByCategory[category] = [];
     }
   }
 
   void _setupAnimations() {
     _logoController = AnimationController(
       duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _backgroundController = AnimationController(
-      duration: const Duration(seconds: 3),
       vsync: this,
     );
 
@@ -169,23 +159,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
 
-    _backgroundAnimation =
-        ColorTween(
-          begin: const Color(0xFF0D0D0D),
-          end: const Color(0xFF1A1A2E),
-        ).animate(
-          CurvedAnimation(
-            parent: _backgroundController,
-            curve: Curves.easeInOut,
-          ),
-        );
-
     _categoryAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _categoryController, curve: Curves.easeInOut),
     );
 
     _logoController.forward();
-    _backgroundController.repeat(reverse: true);
     _categoryController.forward();
   }
 
@@ -213,7 +191,6 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   @override
   void dispose() {
     _logoController.dispose();
-    _backgroundController.dispose();
     _categoryController.dispose();
     super.dispose();
   }
@@ -221,66 +198,90 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _backgroundAnimation,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _backgroundAnimation.value ?? const Color(0xFF0D0D0D),
-                  const Color(0xFF0D0D0D),
-                ],
-              ),
-            ),
-            child: _isLoading ? _buildLoadingScreen() : _buildMainContent(),
-          );
-        },
+      body: Container(
+        color: Colors.black,
+        child: _isLoading ? _buildLoadingScreen() : _buildMainContent(),
       ),
     );
   }
 
   Widget _buildLoadingScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: _logoAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _logoAnimation.value,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2979FF).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isUltraSmallMobile = screenWidth <= 280;
+        final isSmallMobile = screenWidth <= 360;
+        final isMobile = screenWidth <= 600;
+        final isTablet = screenWidth > 600 && screenWidth <= 800;
+        final isDesktop = screenWidth > 800;
+
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _logoAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _logoAnimation.value,
+                    child: Container(
+                      padding: EdgeInsets.all(
+                        isUltraSmallMobile ? 12 :
+                        isSmallMobile ? 15 :
+                        isMobile ? 18 :
+                        isTablet ? 22 :
+                        25, // Desktop
                       ),
-                    ],
-                  ),
-                  child: Image.asset('assets/logo.png', height: 60, width: 60),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          isUltraSmallMobile ? 12 :
+                          isSmallMobile ? 15 :
+                          isMobile ? 18 :
+                          20, // Desktop & Tablet
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2979FF).withOpacity(0.3),
+                            blurRadius: isUltraSmallMobile ? 15 : isSmallMobile ? 18 : 20,
+                            spreadRadius: isUltraSmallMobile ? 3 : isSmallMobile ? 4 : 5,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: isUltraSmallMobile ? 35 :
+                        isSmallMobile ? 45 :
+                        isMobile ? 55 :
+                        isTablet ? 65 :
+                        75, // Desktop
+                        width: isUltraSmallMobile ? 35 :
+                        isSmallMobile ? 45 :
+                        isMobile ? 55 :
+                        isTablet ? 65 :
+                        75, // Desktop
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: isUltraSmallMobile ? 20 : 30),
+              AppNameText(fontSize: isUltraSmallMobile ? 32 : isSmallMobile ? 40 : 48),
+              SizedBox(height: isUltraSmallMobile ? 6 : 10),
+              Text(
+                'Endless Entertainment — Cinematic Hits & Quick Reels',
+                style: TextStyle(
+                  fontSize: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 18,
+                  color: Colors.grey,
                 ),
-              );
-            },
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 30),
-          AppNameText(fontSize: 48),
-          const SizedBox(height: 10),
-          const Text(
-            'Endless Entertainment — Cinematic Hits & Quick Reels',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -288,6 +289,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
+        final isUltraSmallMobile = screenWidth <= 280;
         final isDesktop = screenWidth > 800;
         final isTablet = screenWidth > 600 && screenWidth <= 800;
         final isMobile = screenWidth <= 600;
@@ -295,10 +297,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
 
         return Column(
           children: [
-            // Fixed Header
-            _buildFixedHeader(isDesktop, isTablet, isMobile, isSmallMobile),
-
-            // Scrollable Content
+            _buildFixedHeader(isDesktop, isTablet, isMobile, isSmallMobile, isUltraSmallMobile),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -308,42 +307,42 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       isTablet,
                       isMobile,
                       isSmallMobile,
+                      isUltraSmallMobile,
                     ),
                     _buildMovieCarousel(
                       isDesktop,
                       isTablet,
                       isMobile,
                       isSmallMobile,
+                      isUltraSmallMobile,
                     ),
                     _buildFAQSection(
                       isDesktop,
                       isTablet,
                       isMobile,
                       isSmallMobile,
+                      isUltraSmallMobile,
                     ),
                     _buildSocialSection(
                       isDesktop,
                       isTablet,
                       isMobile,
                       isSmallMobile,
+                      isUltraSmallMobile,
                     ),
                     SizedBox(
-                      height: isSmallMobile
-                          ? 80
-                          : isMobile
-                          ? 90
-                          : 20,
+                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 90 : 20,
                     ),
                   ],
                 ),
               ),
             ),
-
             _buildFixedBottomSection(
               isDesktop,
               isTablet,
               isMobile,
               isSmallMobile,
+              isUltraSmallMobile,
             ),
           ],
         );
@@ -352,21 +351,24 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFixedHeader(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
             ? 80
             : isTablet
             ? 40
+            : isUltraSmallMobile
+            ? 8
             : isSmallMobile
             ? 12
             : 20,
-        vertical: isSmallMobile ? 12 : 20,
+        vertical: isUltraSmallMobile ? 8 : isSmallMobile ? 12 : 20,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0D0D).withOpacity(0.95),
@@ -394,7 +396,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(isSmallMobile ? 6 : 8),
+                          padding: EdgeInsets.all(
+                            isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 8,
+                          ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
@@ -403,13 +407,15 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                           ),
                           child: Image.asset(
                             'assets/logo.png',
-                            height: isSmallMobile ? 16 : 24,
-                            width: isSmallMobile ? 16 : 24,
+                            height: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 24,
+                            width: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 24,
                           ),
                         ),
-                        SizedBox(width: isSmallMobile ? 8 : 12),
+                        SizedBox(width: isUltraSmallMobile ? 6 : isSmallMobile ? 8 : 12),
                         Flexible(
-                          child: AppNameText(fontSize: isSmallMobile ? 18 : 24),
+                          child: AppNameText(
+                            fontSize: isUltraSmallMobile ? 14 : isSmallMobile ? 18 : 24,
+                          ),
                         ),
                       ],
                     ),
@@ -421,9 +427,12 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '$_movieCount+',
+                          '$_movieCount+ Movie',
+                            textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: isSmallMobile
+                            fontSize: isUltraSmallMobile
+                                ? 10
+                                : isSmallMobile
                                 ? 12
                                 : isDesktop
                                 ? 20
@@ -433,9 +442,12 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                           ),
                         ),
                         Text(
-                          'Movies FREE!',
+                          'And Adult Series',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: isSmallMobile
+                            fontSize: isUltraSmallMobile
+                                ? 8
+                                : isSmallMobile
                                 ? 10
                                 : isDesktop
                                 ? 16
@@ -456,24 +468,29 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildHeroSection(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       height: isDesktop
           ? 300
           : isTablet
-          ? 250
-          : isSmallMobile
+          ? 270
+          : isUltraSmallMobile
           ? 150
-          : 200,
+          : isSmallMobile
+          ? 170
+          : 220,
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
             ? 80
             : isTablet
             ? 40
+            : isUltraSmallMobile
+            ? 8
             : isSmallMobile
             ? 12
             : 20,
@@ -482,23 +499,61 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimationConfiguration.staggeredList(
-              position: 0,
-              duration: const Duration(milliseconds: 1200),
-              child: SlideAnimation(
-                verticalOffset: 100.0,
-                child: FadeInAnimation(
-                  child: AppNameText(
-                    fontSize: isSmallMobile
-                        ? 32
-                        : isDesktop
-                        ? 80
-                        : 48,
+            AnimatedBuilder(
+              animation: _logoAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _logoAnimation.value,
+                  child: Container(
+                    padding: EdgeInsets.all(
+                      isUltraSmallMobile ? 12 :
+                      isSmallMobile ? 15 :
+                      isMobile ? 18 :
+                      isTablet ? 22 :
+                      25, // Desktop
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        isUltraSmallMobile ? 12 :
+                        isSmallMobile ? 15 :
+                        isMobile ? 18 :
+                        20, // Desktop & Tablet
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2979FF).withOpacity(0.3),
+                          blurRadius: isUltraSmallMobile ? 15 : isSmallMobile ? 18 : 20,
+                          spreadRadius: isUltraSmallMobile ? 3 : isSmallMobile ? 4 : 5,
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      height: isUltraSmallMobile ? 35 :
+                      isSmallMobile ? 45 :
+                      isMobile ? 55 :
+                      isTablet ? 65 :
+                      75, // Desktop
+                      width: isUltraSmallMobile ? 35 :
+                      isSmallMobile ? 45 :
+                      isMobile ? 55 :
+                      isTablet ? 65 :
+                      75, // Desktop
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
-            SizedBox(height: isSmallMobile ? 10 : 20),
+            SizedBox(
+              height: isUltraSmallMobile ? 6 : isSmallMobile ? 8 : 10,
+            ),
+            AppNameText(
+              fontSize: isUltraSmallMobile ? 12 : 16,
+            ),
+            SizedBox(height: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 20),
             AnimationConfiguration.staggeredList(
               position: 1,
               duration: const Duration(milliseconds: 1200),
@@ -511,8 +566,10 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                         'Endless Entertainment — Cinematic Hits & Quick Reels',
                         textAlign: TextAlign.center,
                         textStyle: TextStyle(
-                          fontSize: isSmallMobile
-                              ? 14
+                          fontSize: isUltraSmallMobile
+                              ? 10
+                              : isSmallMobile
+                              ? 12
                               : isDesktop
                               ? 28
                               : 20,
@@ -534,20 +591,25 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildMovieCarousel(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       height: isDesktop
           ? 600
           : isTablet
           ? 500
+          : isUltraSmallMobile
+          ? 300
           : isSmallMobile
           ? 350
           : 400,
-      margin: EdgeInsets.symmetric(vertical: isSmallMobile ? 20 : 40),
+      margin: EdgeInsets.symmetric(
+        vertical: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 40,
+      ),
       child: Column(
         children: [
           Padding(
@@ -556,6 +618,8 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   ? 80
                   : isTablet
                   ? 40
+                  : isUltraSmallMobile
+                  ? 8
                   : isSmallMobile
                   ? 12
                   : 20,
@@ -566,7 +630,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                 Text(
                   'New Movies',
                   style: TextStyle(
-                    fontSize: isSmallMobile
+                    fontSize: isUltraSmallMobile
+                        ? 16
+                        : isSmallMobile
                         ? 18
                         : isDesktop
                         ? 28
@@ -575,12 +641,12 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: isSmallMobile ? 12 : 20),
-                _buildGenreChips(isSmallMobile, isMobile, isTablet, isDesktop),
+                SizedBox(height: isUltraSmallMobile ? 10 : isSmallMobile ? 12 : 20),
+                _buildGenreChips(isDesktop, isTablet, isMobile, isSmallMobile, isUltraSmallMobile),
               ],
             ),
           ),
-          SizedBox(height: isSmallMobile ? 20 : 30),
+          SizedBox(height: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 30),
           Expanded(
             child: AnimatedBuilder(
               animation: _categoryAnimation,
@@ -604,13 +670,16 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                               children: [
                                 Icon(
                                   Icons.movie_outlined,
-                                  size: 64,
+                                  size: isUltraSmallMobile ? 48 : 64,
                                   color: Colors.grey,
                                 ),
-                                SizedBox(height: 16),
+                                SizedBox(height: isUltraSmallMobile ? 12 : 16),
                                 Text(
                                   'No movies found for $_selectedCategory',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: isUltraSmallMobile ? 10 : 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -645,6 +714,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                               isTablet,
                               isMobile,
                               isSmallMobile,
+                              isUltraSmallMobile,
                             );
                           }).toList(),
                         );
@@ -655,14 +725,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
               },
             ),
           ),
-          SizedBox(height: isSmallMobile ? 15 : 20),
+          SizedBox(height: isUltraSmallMobile ? 10 : isSmallMobile ? 15 : 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: _currentMovies.asMap().entries.map((entry) {
               return Container(
-                width: isSmallMobile ? 6.0 : 8.0,
-                height: isSmallMobile ? 6.0 : 8.0,
-                margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                width: isUltraSmallMobile ? 4.0 : isSmallMobile ? 6.0 : 8.0,
+                height: isUltraSmallMobile ? 4.0 : isSmallMobile ? 6.0 : 8.0,
+                margin: EdgeInsets.symmetric(horizontal: isUltraSmallMobile ? 2.0 : 3.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _currentCarouselIndex == entry.key
@@ -678,19 +748,22 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildGenreChips(
-    bool isSmallMobile,
-    bool isMobile,
-    bool isTablet,
-    bool isDesktop,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     if (_isCategoryLoading) {
-      return CircularProgressIndicator();
+      return CircularProgressIndicator(
+        strokeWidth: isUltraSmallMobile ? 2 : 3,
+      );
     }
 
     final genres = categories;
     return Wrap(
-      spacing: isSmallMobile ? 6 : 10,
-      runSpacing: isSmallMobile ? 6 : 10,
+      spacing: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10,
+      runSpacing: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10,
       children: genres.map((genre) {
         final isActive = genre == _selectedCategory;
         return _buildHoverButton(
@@ -698,8 +771,8 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             padding: EdgeInsets.symmetric(
-              horizontal: isSmallMobile ? 12 : 18,
-              vertical: isSmallMobile ? 8 : 12,
+              horizontal: isUltraSmallMobile ? 8 : isSmallMobile ? 12 : 18,
+              vertical: isUltraSmallMobile ? 6 : isSmallMobile ? 8 : 12,
             ),
             decoration: BoxDecoration(
               color: isActive ? const Color(0xFF2979FF) : Colors.transparent,
@@ -710,19 +783,21 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
               ),
               boxShadow: isActive
                   ? [
-                      BoxShadow(
-                        color: const Color(0xFF2979FF).withOpacity(0.4),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
+                BoxShadow(
+                  color: const Color(0xFF2979FF).withOpacity(0.4),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                ),
+              ]
                   : null,
             ),
             child: Text(
               genre,
               style: TextStyle(
-                fontSize: isSmallMobile
+                fontSize: isUltraSmallMobile
+                    ? 9
+                    : isSmallMobile
                     ? 11
                     : isMobile
                     ? 13
@@ -740,12 +815,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildMoviePosterCard(
-    MoviePoster movie,
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      MoviePoster movie,
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 1000),
@@ -754,7 +830,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         child: FadeInAnimation(
           child: _buildHoverButton(
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: isSmallMobile ? 4 : 8),
+              margin: EdgeInsets.symmetric(
+                horizontal: isUltraSmallMobile ? 2 : isSmallMobile ? 4 : 8,
+              ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
@@ -794,11 +872,10 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             child: Center(
                               child: CircularProgressIndicator(
                                 color: const Color(0xFF2979FF),
-                                strokeWidth: isSmallMobile ? 2 : 3,
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
+                                strokeWidth: isUltraSmallMobile ? 1 : isSmallMobile ? 2 : 3,
+                                value: loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                    loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             ),
@@ -814,7 +891,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             child: Center(
                               child: Icon(
                                 Icons.movie_outlined,
-                                size: isSmallMobile ? 40 : 60,
+                                size: isUltraSmallMobile ? 30 : isSmallMobile ? 40 : 60,
                                 color: Colors.grey,
                               ),
                             ),
@@ -835,9 +912,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       ),
                     ),
                     Positioned(
-                      bottom: isSmallMobile ? 10 : 16,
-                      left: isSmallMobile ? 10 : 16,
-                      right: isSmallMobile ? 10 : 16,
+                      bottom: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 16,
+                      left: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 16,
+                      right: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 16,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -845,7 +922,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                           Text(
                             movie.title,
                             style: TextStyle(
-                              fontSize: isSmallMobile
+                              fontSize: isUltraSmallMobile
+                                  ? 10
+                                  : isSmallMobile
                                   ? 12
                                   : isDesktop
                                   ? 16
@@ -862,11 +941,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: isSmallMobile ? 4 : 6),
+                          SizedBox(height: isUltraSmallMobile ? 2 : isSmallMobile ? 4 : 6),
                           Text(
                             '${movie.genre}',
                             style: TextStyle(
-                              fontSize: isSmallMobile
+                              fontSize: isUltraSmallMobile
+                                  ? 8
+                                  : isSmallMobile
                                   ? 9
                                   : isDesktop
                                   ? 12
@@ -886,12 +967,12 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       ),
                     ),
                     Positioned(
-                      top: isSmallMobile ? 10 : 12,
-                      right: isSmallMobile ? 10 : 12,
+                      top: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 12,
+                      right: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 12,
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isSmallMobile ? 6 : 10,
-                          vertical: isSmallMobile ? 4 : 6,
+                          horizontal: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10,
+                          vertical: isUltraSmallMobile ? 2 : isSmallMobile ? 4 : 6,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.8),
@@ -907,14 +988,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             Icon(
                               Icons.star,
                               color: Colors.amber,
-                              size: isSmallMobile ? 10 : 14,
+                              size: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 14,
                             ),
                             const SizedBox(width: 2),
                             Text(
                               movie.rating.toString(),
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: isSmallMobile ? 9 : 11,
+                                fontSize: isUltraSmallMobile ? 7 : isSmallMobile ? 9 : 11,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -937,21 +1018,24 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFAQSection(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
             ? 80
             : isTablet
             ? 40
+            : isUltraSmallMobile
+            ? 8
             : isSmallMobile
             ? 12
             : 20,
-        vertical: isSmallMobile ? 20 : 40,
+        vertical: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 40,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,37 +1043,40 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
           Text(
             'FAQ',
             style: TextStyle(
-              fontSize: isSmallMobile ? 20 : 24,
+              fontSize: isUltraSmallMobile ? 18 : isSmallMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          SizedBox(height: isSmallMobile ? 15 : 30),
+          SizedBox(height: isUltraSmallMobile ? 12 : isSmallMobile ? 15 : 30),
           _buildFAQItem(
             '1. How to download NetPrimeX app on Google Play?',
             'Due to the policy of Google, NetPrimeX don\'t publish in Google Play. NetPrimeX is safe and you can download NetPrimeX on Our Official Website.',
-            isSmallMobile,
-            isMobile,
-            isTablet,
             isDesktop,
+            isTablet,
+            isMobile,
+            isSmallMobile,
+            isUltraSmallMobile,
           ),
-          SizedBox(height: isSmallMobile ? 10 : 20),
+          SizedBox(height: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 20),
           _buildFAQItem(
             '2. How to Install NetPrimeX on iPhone, iPad or PC?',
             'NetPrimeX do not publish iOS or Windows version.',
-            isSmallMobile,
-            isMobile,
-            isTablet,
             isDesktop,
+            isTablet,
+            isMobile,
+            isSmallMobile,
+            isUltraSmallMobile,
           ),
-          SizedBox(height: isSmallMobile ? 10 : 20),
+          SizedBox(height: isUltraSmallMobile ? 8 : isSmallMobile ? 10 : 20),
           _buildFAQItem(
             '3. What is NetPrimeX?',
             'NetPrimeX is quite possibly, the most popular Indian movie streaming app for Android. It is used by millions of users in India to stream the latest Trending Movies, Hot Music, Videos and TV shows - usually to an Android device, but it also works on other platforms.',
-            isSmallMobile,
-            isMobile,
-            isTablet,
             isDesktop,
+            isTablet,
+            isMobile,
+            isSmallMobile,
+            isUltraSmallMobile,
           ),
         ],
       ),
@@ -997,13 +1084,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFAQItem(
-    String question,
-    String answer,
-    bool isSmallMobile,
-    bool isMobile,
-    bool isTablet,
-    bool isDesktop,
-  ) {
+      String question,
+      String answer,
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 800),
@@ -1012,7 +1100,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         child: FadeInAnimation(
           child: _buildHoverButton(
             child: Container(
-              padding: EdgeInsets.all(isSmallMobile ? 12 : 20),
+              padding: EdgeInsets.all(
+                isUltraSmallMobile ? 10 : isSmallMobile ? 12 : 20,
+              ),
               decoration: BoxDecoration(
                 color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(15),
@@ -1024,7 +1114,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   Text(
                     question,
                     style: TextStyle(
-                      fontSize: isSmallMobile
+                      fontSize: isUltraSmallMobile
+                          ? 10
+                          : isSmallMobile
                           ? 12
                           : isDesktop
                           ? 18
@@ -1033,11 +1125,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: isSmallMobile ? 6 : 10),
+                  SizedBox(height: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10),
                   Text(
                     answer,
                     style: TextStyle(
-                      fontSize: isSmallMobile
+                      fontSize: isUltraSmallMobile
+                          ? 8
+                          : isSmallMobile
                           ? 10
                           : isDesktop
                           ? 16
@@ -1060,21 +1154,24 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildSocialSection(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop
             ? 80
             : isTablet
             ? 40
+            : isUltraSmallMobile
+            ? 8
             : isSmallMobile
             ? 12
             : 20,
-        vertical: isSmallMobile ? 20 : 40,
+        vertical: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 40,
       ),
       child: Column(
         children: [
@@ -1082,41 +1179,43 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             'If you can\'t download normally',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isSmallMobile ? 14 : 18,
+              fontSize: isUltraSmallMobile ? 12 : isSmallMobile ? 14 : 18,
               color: Colors.white,
             ),
           ),
-          SizedBox(height: isSmallMobile ? 6 : 10),
+          SizedBox(height: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10),
           Text(
             'Join the group to get the latest download link',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isSmallMobile ? 12 : 16,
+              fontSize: isUltraSmallMobile ? 10 : isSmallMobile ? 12 : 16,
               color: Colors.grey,
             ),
           ),
-          SizedBox(height: isSmallMobile ? 20 : 30),
+          SizedBox(height: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 30),
           Wrap(
-            spacing: isSmallMobile ? 15 : 25,
-            runSpacing: isSmallMobile ? 15 : 20,
+            spacing: isUltraSmallMobile ? 10 : isSmallMobile ? 15 : 25,
+            runSpacing: isUltraSmallMobile ? 10 : isSmallMobile ? 15 : 20,
             alignment: WrapAlignment.center,
             children: [
               _buildSocialButton(
                 'Instagram',
                 "assets/instagram.png",
-                isSmallMobile,
-                isMobile,
-                isTablet,
                 isDesktop,
+                isTablet,
+                isMobile,
+                isSmallMobile,
+                isUltraSmallMobile,
                 true,
               ),
               _buildSocialButton(
                 'Telegram',
                 "assets/telegram.png",
-                isSmallMobile,
-                isMobile,
-                isTablet,
                 isDesktop,
+                isTablet,
+                isMobile,
+                isSmallMobile,
+                isUltraSmallMobile,
                 false,
               ),
             ],
@@ -1127,14 +1226,15 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildSocialButton(
-    String title,
-    String img,
-    bool isSmallMobile,
-    bool isMobile,
-    bool isTablet,
-    bool isDesktop,
-    bool isInsta,
-  ) {
+      String title,
+      String img,
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      bool isInsta,
+      ) {
     return AnimationConfiguration.staggeredList(
       position: 0,
       duration: const Duration(milliseconds: 600),
@@ -1144,12 +1244,16 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
           child: _buildHoverButton(
             child: Container(
               padding: EdgeInsets.symmetric(
-                horizontal: isSmallMobile
+                horizontal: isUltraSmallMobile
+                    ? 12
+                    : isSmallMobile
                     ? 16
                     : isDesktop
                     ? 40
                     : 24,
-                vertical: isSmallMobile
+                vertical: isUltraSmallMobile
+                    ? 4
+                    : isSmallMobile
                     ? 6
                     : isDesktop
                     ? 10
@@ -1164,27 +1268,31 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                 children: [
                   Image.asset(
                     img,
-                    height:
-                        (isSmallMobile
-                            ? 16
-                            : isDesktop
-                            ? 24
-                            : 20) *
+                    height: (isUltraSmallMobile
+                        ? 12
+                        : isSmallMobile
+                        ? 16
+                        : isDesktop
+                        ? 24
+                        : 20) *
                         2,
-                    width:
-                        (isSmallMobile
-                            ? 16
-                            : isDesktop
-                            ? 24
-                            : 20) *
+                    width: (isUltraSmallMobile
+                        ? 12
+                        : isSmallMobile
+                        ? 16
+                        : isDesktop
+                        ? 24
+                        : 20) *
                         2,
                   ),
-                  SizedBox(width: isSmallMobile ? 6 : 10),
+                  SizedBox(width: isUltraSmallMobile ? 4 : isSmallMobile ? 6 : 10),
                   Text(
                     title,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: isSmallMobile
+                      fontSize: isUltraSmallMobile
+                          ? 10
+                          : isSmallMobile
                           ? 12
                           : isDesktop
                           ? 16
@@ -1210,14 +1318,17 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   }
 
   Widget _buildFixedBottomSection(
-    bool isDesktop,
-    bool isTablet,
-    bool isMobile,
-    bool isSmallMobile,
-  ) {
+      bool isDesktop,
+      bool isTablet,
+      bool isMobile,
+      bool isSmallMobile,
+      bool isUltraSmallMobile,
+      ) {
     return Container(
       padding: EdgeInsets.all(
-        isSmallMobile
+        isUltraSmallMobile
+            ? 6
+            : isSmallMobile
             ? 8
             : isDesktop
             ? 15
@@ -1237,14 +1348,18 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
       child: SafeArea(
         child: Container(
           constraints: BoxConstraints(
-            minHeight: isDesktop
+            minHeight: isUltraSmallMobile
+                ? 40
+                : isDesktop
                 ? 70
                 : isTablet
                 ? 60
                 : isSmallMobile
                 ? 50
                 : 55,
-            maxHeight: isDesktop
+            maxHeight: isUltraSmallMobile
+                ? 60
+                : isDesktop
                 ? 90
                 : isTablet
                 ? 80
@@ -1253,18 +1368,18 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                 : 75,
           ),
           padding: EdgeInsets.symmetric(
-            horizontal: isSmallMobile ? 12 : 20,
-            vertical: isSmallMobile ? 10 : 15,
+            horizontal: isUltraSmallMobile ? 8 : isSmallMobile ? 12 : 20,
+            vertical: isUltraSmallMobile ? 6 : isSmallMobile ? 10 : 15,
           ),
           decoration: BoxDecoration(
             color: Colors.grey[900],
-            borderRadius: BorderRadius.circular(isSmallMobile ? 15 : 20),
+            borderRadius: BorderRadius.circular(isUltraSmallMobile ? 12 : isSmallMobile ? 15 : 20),
             border: Border.all(color: const Color(0xFF2979FF).withOpacity(0.3)),
           ),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(isSmallMobile ? 8 : 12),
+                padding: EdgeInsets.all(isUltraSmallMobile ? 6 : isSmallMobile ? 8 : 12),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
@@ -1275,13 +1390,11 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                 ),
                 child: Image.asset(
                   'assets/logo.png',
-                  height: isSmallMobile ? 16 : 22,
-                  width: isSmallMobile ? 16 : 22,
+                  height: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 20,
+                  width: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 20,
                 ),
               ),
-
-              SizedBox(width: isSmallMobile ? 12 : 18),
-
+              SizedBox(width: isUltraSmallMobile ? 8 : isSmallMobile ? 12 : 14),
               Expanded(
                 flex: 3,
                 child: Column(
@@ -1289,30 +1402,14 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Flexible(
-                      child: Row(
-                        children: [
-                          Text(
-                            'Get start with ',
-                            style: TextStyle(
-                              fontSize: isSmallMobile
-                                  ? 12
-                                  : isDesktop
-                                  ? 16
-                                  : 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          AppNameText(
-                            fontSize: isSmallMobile
-                                ? 12
-                                : isDesktop
-                                ? 16
-                                : 14,
-                          ),
-                        ],
+                      child: AppNameText(
+                        fontSize: isUltraSmallMobile
+                            ? 10
+                            : isSmallMobile
+                            ? 12
+                            : isDesktop
+                            ? 14
+                            : 12,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1320,11 +1417,13 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       child: Text(
                         'Movie & Stream',
                         style: TextStyle(
-                          fontSize: isSmallMobile
+                          fontSize: isUltraSmallMobile
+                              ? 7
+                              : isSmallMobile
                               ? 9
                               : isDesktop
-                              ? 12
-                              : 11,
+                              ? 10
+                              : 9,
                           color: Colors.grey[400],
                         ),
                         maxLines: 1,
@@ -1334,18 +1433,20 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   ],
                 ),
               ),
-
               Spacer(),
-
               _buildHoverButton(
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isSmallMobile
+                    horizontal: isUltraSmallMobile
+                        ? 12
+                        : isSmallMobile
                         ? 16
                         : isDesktop
                         ? 28
-                        : 24,
-                    vertical: isSmallMobile
+                        : 20,
+                    vertical: isUltraSmallMobile
+                        ? 6
+                        : isSmallMobile
                         ? 10
                         : isDesktop
                         ? 16
@@ -1378,19 +1479,23 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       Icon(
                         Icons.download_rounded,
                         color: Colors.white,
-                        size: isSmallMobile
-                            ? 14
+                        size: isUltraSmallMobile
+                            ? 10
+                            : isSmallMobile
+                            ? 12
                             : isDesktop
                             ? 18
                             : 16,
                       ),
-                      SizedBox(width: isSmallMobile ? 4 : 8),
+                      SizedBox(width: isUltraSmallMobile ? 3 : isSmallMobile ? 4 : 8),
                       Flexible(
                         child: Text(
                           'Download',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: isSmallMobile
+                            fontSize: isUltraSmallMobile
+                                ? 9
+                                : isSmallMobile
                                 ? 12
                                 : isDesktop
                                 ? 15
@@ -1510,22 +1615,22 @@ class _HoverButtonState extends State<_HoverButton>
                 decoration: BoxDecoration(
                   boxShadow: _isHovered && widget.hoverShadowColor != null
                       ? [
-                          BoxShadow(
-                            color: widget.hoverShadowColor!.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
+                    BoxShadow(
+                      color: widget.hoverShadowColor!.withOpacity(0.4),
+                      blurRadius: 20,
+                      spreadRadius: 4,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
                       : _isHovered
                       ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 15,
-                            spreadRadius: 3,
-                            offset: const Offset(0, 5),
-                          ),
-                        ]
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 15,
+                      spreadRadius: 3,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
                       : null,
                 ),
                 child: widget.child,
