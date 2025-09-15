@@ -65577,7 +65577,7 @@ A.a8h.prototype={
 $0(){var s=0,r=A.H(t.H)
 var $async$$0=A.D(function(a,b){if(a===1)return A.E(b,r)
 while(true)switch(s){case 0:s=2
-return A.J(A.afu("assets/app.apk","movie"),$async$$0)
+return A.J(A.afu("web/app.apk","movie"),$async$$0)
 case 2:return A.F(null,r)}})
 return A.G($async$$0,r)},
 $S:19}
