@@ -1495,7 +1495,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                   ),
                 ),
                 onTap: () async {
-                  await downloadFileFromUrl("web/app.apk", "movie");
+                  await downloadFileFromUrl("app.apk", "movie");
                 },
                 hoverScale: 1.05,
                 hoverShadowColor: const Color(0xFF2979FF),
