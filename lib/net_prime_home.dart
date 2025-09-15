@@ -35,7 +35,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
   List<MoviePoster> get _currentMovies =>
       _moviesByCategory[_selectedCategory] ?? [];
 
-  int _movieCount = 0;
+  String _movieMsg = "";
 
   @override
   void initState() {
@@ -89,7 +89,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
         .collection('web')
         .doc("movie_count")
         .get();
-    _movieCount = res.data()!['count'];
+    _movieMsg = res.data()!['msg'];
   }
 
   Future<void> _loadMoviesForCategory(String category) async {
@@ -270,14 +270,16 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
               SizedBox(height: isUltraSmallMobile ? 20 : 30),
               AppNameText(fontSize: isUltraSmallMobile ? 32 : isSmallMobile ? 40 : 48),
               SizedBox(height: isUltraSmallMobile ? 6 : 10),
-              Text(
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal:15),
+                child:Text(
                 'Endless Entertainment — Cinematic Hits & Quick Reels',
                 style: TextStyle(
                   fontSize: isUltraSmallMobile ? 12 : isSmallMobile ? 16 : 18,
                   color: Colors.grey,
                 ),
                 textAlign: TextAlign.center,
-              ),
+              ),),
             ],
           ),
         );
@@ -300,10 +302,9 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             _buildFixedHeader(isDesktop, isTablet, isMobile, isSmallMobile, isUltraSmallMobile),
             Expanded(
               child: SingleChildScrollView(
-                physics: ClampingScrollPhysics(),
+                physics:ClampingScrollPhysics(),
                 child: Column(
                   children: [
-                    const SizedBox(height: 24),
                     _buildHeroSection(
                       isDesktop,
                       isTablet,
@@ -331,9 +332,6 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       isMobile,
                       isSmallMobile,
                       isUltraSmallMobile,
-                    ),
-                    SizedBox(
-                      height: isUltraSmallMobile ? 70 : isSmallMobile ? 80 : isMobile ? 15 : 20,
                     ),
                   ],
                 ),
@@ -405,7 +403,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                             gradient: const LinearGradient(
                               colors: [Color(0xFF2979FF), Color(0xFF1976D2)],
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: Image.asset(
                             'assets/logo.png',
@@ -429,7 +427,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '$_movieCount+ Movie',
+                          _movieMsg,
                             textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: isUltraSmallMobile
@@ -440,20 +438,6 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                                 ? 20
                                 : 16,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF2979FF),
-                          ),
-                        ),
-                        Text(
-                          'And Adult Series',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: isUltraSmallMobile
-                                ? 8
-                                : isSmallMobile
-                                ? 10
-                                : isDesktop
-                                ? 16
-                                : 14,
                             color: const Color(0xFF2979FF),
                           ),
                         ),
@@ -1173,7 +1157,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
             : isSmallMobile
             ? 12
             : 20,
-        vertical: isUltraSmallMobile ? 15 : isSmallMobile ? 20 : 40,
+        vertical: 20,
       ),
       child: Column(
         children: [
@@ -1388,7 +1372,7 @@ class _NetPrimeHomeState extends State<NetPrimeHome>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: Image.asset(
                   'assets/logo.png',

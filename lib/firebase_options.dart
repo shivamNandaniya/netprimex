@@ -21,25 +21,13 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -53,13 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAEL-PKpOK4mXhjFY5nWySWhoLSEPmZ0I8',
-    appId: '1:893271069032:web:0c3f109a9a5cbd137246dd',
-    messagingSenderId: '893271069032',
-    projectId: 'netprime-16533',
-    authDomain: 'netprime-16533.firebaseapp.com',
-    databaseURL: 'https://netprime-16533-default-rtdb.firebaseio.com',
-    storageBucket: 'netprime-16533.firebasestorage.app',
-    measurementId: 'G-WDBZHFJJWP',
+    apiKey: 'AIzaSyDqLIQ8JrEgKLN2vvjrxf_UXbzPUPmCl9E',
+    appId: '1:1083589876021:web:93fbe9c7a0fc491a19547c',
+    messagingSenderId: '1083589876021',
+    projectId: 'netprimex-57008',
+    authDomain: 'netprimex-57008.firebaseapp.com',
+    storageBucket: 'netprimex-57008.firebasestorage.app',
+    measurementId: 'G-RG2WZVJWMG',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCTLKJr53CsKg9vRu92l_QoBZfVMVRfVvc',
+    appId: '1:1083589876021:ios:4e46993818812e2019547c',
+    messagingSenderId: '1083589876021',
+    projectId: 'netprimex-57008',
+    storageBucket: 'netprimex-57008.firebasestorage.app',
+    iosBundleId: 'com.example.movieSplash',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCTLKJr53CsKg9vRu92l_QoBZfVMVRfVvc',
+    appId: '1:1083589876021:ios:4e46993818812e2019547c',
+    messagingSenderId: '1083589876021',
+    projectId: 'netprimex-57008',
+    storageBucket: 'netprimex-57008.firebasestorage.app',
+    iosBundleId: 'com.example.movieSplash',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBzASqgXKKurBwV9ZrgLEkxK35pWep2uy0',
+    appId: '1:1083589876021:android:eea41044a02fbb6319547c',
+    messagingSenderId: '1083589876021',
+    projectId: 'netprimex-57008',
+    storageBucket: 'netprimex-57008.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDqLIQ8JrEgKLN2vvjrxf_UXbzPUPmCl9E',
+    appId: '1:1083589876021:web:5990f56175c4b5b119547c',
+    messagingSenderId: '1083589876021',
+    projectId: 'netprimex-57008',
+    authDomain: 'netprimex-57008.firebaseapp.com',
+    storageBucket: 'netprimex-57008.firebasestorage.app',
+    measurementId: 'G-DZ5H0ELVXM',
+  );
+
 }
