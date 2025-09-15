@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1083589876021",
+    "project_id": "netprimex-57008",
+    "storage_bucket": "netprimex-57008.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083589876021:android:eea41044a02fbb6319547c",
+        "android_client_info": {
+          "package_name": "com.example.movie_splash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzASqgXKKurBwV9ZrgLEkxK35pWep2uy0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
